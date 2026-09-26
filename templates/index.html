@@ -7,10 +7,24 @@
 </head>
 <body>
     <h1>My To-Do List</h1>
-    <form>
-        <input type="text" placeholder="Enter a new task">
+    <form action = "{{ url_for('add_task')}}" method = "post">
+        <input 
+            type="text" 
+            name = "task"
+            placeholder="Enter a new task"
+            required
+        >
         <button type="submit">Add Task</button>
     </form>
-    <p>No tasks yet.</p>
+
+    <h2>Tasks</h2>
+
+    <ul>
+        {% for task in tasks %}
+            <li>{{ task}}</li>
+        {% else %}
+            <li>No tasks yet.</li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
