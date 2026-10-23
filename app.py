@@ -1,32 +1,77 @@
-from flask import Flask,redirect,render_template,request,url_for
+import sqlite3
+
+from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
-tasks = []
+DATABASE = "tasks.db"
+
+
+def get_connection():
+    connection = sqlite3.connect(DATABASE)
+    connection.row_factory = sqlite3.Row
+    return connection
+
+
+def create_database():
+    with get_connection() as connection:
+        connection.execute("""
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text TEXT NOT NULL,
+                done INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+
+
+create_database()
+
 
 @app.route("/")
 def home():
-    return render_template("index.html",tasks = tasks)
+    with get_connection() as connection:
+        tasks = connection.execute(
+            "SELECT id, text, done FROM tasks ORDER BY id DESC"
+        ).fetchall()
 
-@app.route("/add", methods = ["POST"])
+    return render_template("index.html", tasks=tasks)
+
+
+@app.route("/add", methods=["POST"])
 def add_task():
-    task = request.form.get("task","").strip()
+    task = request.form.get("task", "").strip()
 
     if task:
-        tasks.append({"text": task, "done": False})
+        with get_connection() as connection:
+            connection.execute(
+                "INSERT INTO tasks (text, done) VALUES (?, ?)",
+                (task, 0)
+            )
+
     return redirect(url_for("home"))
 
-@app.route("/toggle/<int:task_index>", methods = ["POST"])
-def toggle_task(task_index):
-    if 0<= task_index < len(tasks):
-        tasks[task_index]["done"]= not tasks[task_index]["done"]
+
+@app.route("/toggle/<int:task_id>", methods=["POST"])
+def toggle_task(task_id):
+    with get_connection() as connection:
+        connection.execute(
+            "UPDATE tasks SET done = NOT done WHERE id = ?",
+            (task_id,)
+        )
+
     return redirect(url_for("home"))
 
-@app.route("/delete/<int:task_index>",methods = ["POST"])
-def delete_task(task_index):
-    if 0<= task_index<len(tasks):
-        tasks.pop(task_index)
+
+@app.route("/delete/<int:task_id>", methods=["POST"])
+def delete_task(task_id):
+    with get_connection() as connection:
+        connection.execute(
+            "DELETE FROM tasks WHERE id = ?",
+            (task_id,)
+        )
+
     return redirect(url_for("home"))
+
 
 if __name__ == "__main__":
-    app.run(debug=True,use_reloader=False)
+    app.run(debug=True, use_reloader=False)
