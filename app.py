@@ -8,12 +8,18 @@ tasks = []
 def home():
     return render_template("index.html",tasks = tasks)
 
-@app.post("/add")
+@app.route("/add", methods = ["POST"])
 def add_task():
     task = request.form.get("task","").strip()
 
     if task:
-        tasks.append(task)
+        tasks.append({"task": task, "done": False})
+    return redirect(url_for("home"))
+
+@app.route("/toggle/<int:task_index>", methods = ["POST"])
+def toggle_task(task_index):
+    if 0<= task_index < len(tasks):
+        tasks[task_index]["done"]= not tasks[task_index]["done"]
     return redirect(url_for("home"))
 
 if __name__ == "__main__":
