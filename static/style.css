@@ -104,9 +104,9 @@ input[type="checkbox"] {
 }
 
 .delete-button {
-    background: #2a1ab9;
+    background: #1d4ed8;
 }
 
 .delete-button:hover {
-    background: #1125a8;
+    background: #1d4ed8;
 }
