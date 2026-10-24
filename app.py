@@ -1,6 +1,6 @@
 import sqlite3
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, abort, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
@@ -71,6 +71,30 @@ def delete_task(task_id):
         )
 
     return redirect(url_for("home"))
+
+@app.route("/edit/<int:task_id>", methods=["GET", "POST"])
+def edit_task(task_id):
+    with get_connection() as connection:
+        task = connection.execute(
+            "SELECT id, text, done FROM tasks WHERE id = ?",
+            (task_id,)
+        ).fetchone()
+
+        if task is None:
+            abort(404)
+
+        if request.method == "POST":
+            updated_text = request.form.get("text", "").strip()
+
+            if updated_text:
+                connection.execute(
+                    "UPDATE tasks SET text = ? WHERE id = ?",
+                    (updated_text, task_id)
+                )
+
+            return redirect(url_for("home"))
+
+    return render_template("edit.html", task=task)
 
 
 if __name__ == "__main__":
